@@ -1,956 +1,265 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vonona - Réseau Social Malgache</title>
-    <meta name="description" content="Le réseau social de la communauté malgache">
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-        * { font-family: 'Segoe UI', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
-        .glass { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); }
-        .btn-press:active { transform: scale(0.95); opacity: 0.8; }
-        .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:50; justify-content:center; align-items:flex-end; }
-        .modal.active { display:flex; }
-        .slide-up { animation:slideUp 0.3s ease forwards; }
-        @keyframes slideUp { from {transform:translateY(100%);} to {transform:translateY(0);} }
-        .toast { position:fixed; bottom:100px; left:50%; transform:translateX(-50%) translateY(100px); background:rgba(0,0,0,0.9); color:white; padding:12px 24px; border-radius:25px; opacity:0; transition:all 0.3s; z-index:100; }
-        .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
-        .story-ring { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); padding: 2px; border-radius: 50%; }
-        .language-selector { position: fixed; top: 20px; right: 20px; z-index: 60; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<title>Vonona</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+body{
+  font-family:system-ui;
+  background:radial-gradient(circle at top,#7c3aed,#4c1d95);
+  min-height:100vh;
+}
+.glass{
+  background:rgba(255,255,255,0.08);
+  backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,0.1);
+}
+.card{
+  background:white;
+  border-radius:24px;
+  box-shadow:0 20px 40px rgba(0,0,0,0.15);
+  transition:all .2s ease;
+}
+.card:hover{transform:translateY(-3px)}
+.toast{
+  position:fixed;bottom:80px;left:50%;
+  transform:translateX(-50%);
+  background:black;color:white;
+  padding:10px 20px;border-radius:20px;
+  opacity:0;transition:.3s;
+}
+.toast.show{opacity:1}
+@media (prefers-color-scheme:dark){
+  body{background:#111827}
+  .card{background:#1f2937;color:white}
+}
+</style>
 </head>
-<body>
 
-<!-- LANGUAGE SELECTOR -->
-<div class="language-selector">
-    <select id="lang-select" onchange="changeLanguage()" class="bg-white/20 backdrop-blur text-white border border-white/30 rounded-full px-3 py-1 text-sm outline-none">
-        <option value="fr">🇫🇷 Français</option>
-        <option value="mg">🇲🇬 Malagasy</option>
-    </select>
+<body class="text-gray-800">
+
+<div id="app" class="max-w-md mx-auto p-4">
+
+<!-- HEADER -->
+<div class="flex justify-between items-center mb-6">
+<h1 class="text-2xl font-bold text-white">🇲🇬 Vonona</h1>
+<button onclick="logout()" class="text-white text-sm">Logout</button>
 </div>
 
-<!-- AUTH SCREEN -->
-<div id="auth-screen" class="fixed inset-0 z-50 bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center p-4">
-    <div class="w-full max-w-md text-center">
-        <div class="text-6xl mb-4">🇲🇬</div>
-        <h1 class="text-4xl font-bold text-white mb-2" data-fr="Vonona" data-mg="Vonona">Vonona</h1>
-        <p class="text-purple-100 mb-8" data-fr="Le réseau social malgache" data-mg="Ny tambajotra sosialy malagasy">Le réseau social malgache</p>
-        
-        <div class="bg-white/10 backdrop-blur rounded-2xl p-6 border border-white/20">
-            <input type="text" id="auth-name" data-fr-placeholder="Votre nom" data-mg-placeholder="Anaranao" placeholder="Votre nom" class="w-full px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/60 outline-none mb-4">
-            <input type="password" id="auth-password" data-fr-placeholder="Mot de passe" data-mg-placeholder="Tenimiafina" placeholder="Mot de passe" class="w-full px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/60 outline-none mb-4">
-            <button onclick="login()" class="w-full bg-white text-purple-600 font-bold py-3 rounded-xl btn-press" data-fr="Se connecter" data-mg="Hiditra">Se connecter</button>
-            <button onclick="showRegister()" class="w-full mt-3 text-white/80 text-sm underline" data-fr="Créer un compte" data-mg="Hamorona kaonty">Créer un compte</button>
-        </div>
-    </div>
+<!-- CREATE POST -->
+<div class="card p-4 mb-6">
+<textarea id="postText" placeholder="Exprime toi..."
+class="w-full outline-none resize-none"></textarea>
+
+<input type="file" id="fileInput" hidden accept="image/*">
+<button onclick="document.getElementById('fileInput').click()"
+class="text-sm text-purple-600 mt-2">Ajouter une image</button>
+
+<div id="imgPreview" class="mt-3 hidden">
+<img id="previewImg" class="rounded-xl max-h-60 w-full object-cover">
 </div>
 
-<!-- REGISTER SCREEN -->
-<div id="register-screen" class="hidden fixed inset-0 z-50 bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center p-4">
-    <div class="w-full max-w-md text-center">
-        <div class="text-6xl mb-4">🇲🇬</div>
-        <h1 class="text-3xl font-bold text-white mb-6" data-fr="Créer un compte" data-mg="Hamorona kaonty">Créer un compte</h1>
-        
-        <div class="bg-white/10 backdrop-blur rounded-2xl p-6 border border-white/20 space-y-4">
-            <input type="text" id="reg-name" data-fr-placeholder="Nom complet" data-mg-placeholder="Anarana feno" placeholder="Nom complet" class="w-full px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/60 outline-none">
-            <input type="text" id="reg-username" data-fr-placeholder="Nom d'utilisateur" data-mg-placeholder="Anarana fampiasana" placeholder="Nom d'utilisateur" class="w-full px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/60 outline-none">
-            <input type="password" id="reg-password" data-fr-placeholder="Mot de passe" data-mg-placeholder="Tenimiafina" placeholder="Mot de passe" class="w-full px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/60 outline-none">
-            <input type="password" id="reg-confirm" data-fr-placeholder="Confirmer le mot de passe" data-mg-placeholder="Hamarino ny tenimiafina" placeholder="Confirmer le mot de passe" class="w-full px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/60 outline-none">
-            
-            <div class="flex items-center space-x-2">
-                <img id="reg-avatar-preview" src="https://ui-avatars.com/api/?name=User&background=random" class="w-12 h-12 rounded-full">
-                <label class="flex-1 cursor-pointer bg-white/20 rounded-xl px-4 py-2 text-white text-sm btn-press">
-                    <i class="fas fa-camera mr-2"></i>
-                    <span data-fr="Choisir une photo" data-mg="Misafidiana sary">Choisir une photo</span>
-                    <input type="file" id="reg-avatar" hidden accept="image/*" onchange="previewAvatar(event)">
-                </label>
-            </div>
-            
-            <button onclick="register()" class="w-full bg-white text-purple-600 font-bold py-3 rounded-xl btn-press mt-4" data-fr="S'inscrire" data-mg="Hisoratra anarana">S'inscrire</button>
-            <button onclick="showLogin()" class="text-white/80 text-sm underline" data-fr="Déjà un compte ? Se connecter" data-mg="Efa manana kaonty? Hiditra">Déjà un compte ? Se connecter</button>
-        </div>
-    </div>
+<button onclick="publish()" 
+class="w-full mt-4 bg-purple-600 text-white py-2 rounded-xl">
+Publier
+</button>
 </div>
 
-<!-- MAIN APP -->
-<div id="main-app" class="hidden">
-    <!-- Header -->
-    <nav class="glass fixed top-0 w-full shadow-lg z-40 h-16 flex items-center px-4 justify-between">
-        <div class="flex items-center space-x-2 cursor-pointer" onclick="scrollToTop()">
-            <span class="text-2xl">🇲🇬</span>
-            <h1 class="text-xl font-bold text-purple-600">Vonona</h1>
-        </div>
-        <div class="flex items-center space-x-3">
-            <button onclick="showNotifications()" class="relative btn-press">
-                <i class="fas fa-bell text-gray-600 text-xl"></i>
-                <span id="notif-badge" class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full hidden"></span>
-            </button>
-            <button onclick="showProfile()" class="btn-press">
-                <img id="header-avatar" src="" class="w-10 h-10 rounded-full border-2 border-purple-500 object-cover">
-            </button>
-        </div>
-    </nav>
+<!-- FEED -->
+<div id="feed"></div>
 
-    <!-- Main Content -->
-    <main class="max-w-md mx-auto pt-20 px-4 pb-24">
-        <!-- Stories -->
-        <div class="bg-white rounded-2xl shadow-lg p-4 mb-4 overflow-x-auto">
-            <div class="flex space-x-4" style="min-width: max-content;">
-                <div class="flex flex-col items-center space-y-1 cursor-pointer" onclick="openCamera()">
-                    <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center border-2 border-dashed border-gray-300 relative">
-                        <img id="story-avatar" src="" class="w-14 h-14 rounded-full object-cover">
-                        <div class="absolute bottom-0 right-0 w-5 h-5 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs border-2 border-white">
-                            <i class="fas fa-plus"></i>
-                        </div>
-                    </div>
-                    <span class="text-xs text-gray-600" data-fr="Votre story" data-mg="Ny tantaranao">Votre story</span>
-                </div>
-                <!-- Stories will be loaded dynamically -->
-            </div>
-        </div>
-
-        <!-- Create Post -->
-        <div class="bg-white p-4 rounded-2xl shadow-lg mb-4">
-            <div class="flex space-x-3">
-                <img id="create-avatar" src="" class="w-10 h-10 rounded-full object-cover">
-                <button onclick="openModal()" class="flex-1 bg-gray-100 text-left px-4 py-2 rounded-full text-gray-500 text-sm" data-fr="Quoi de neuf pour Madagascar ?" data-mg="Inona no vaovao eto Madagasikara ?">Quoi de neuf pour Madagascar ?</button>
-            </div>
-            <div class="flex justify-around mt-3 pt-3 border-t">
-                <button onclick="startLive()" class="flex items-center space-x-1 text-gray-600 text-sm btn-press">
-                    <i class="fas fa-video text-red-500"></i>
-                    <span data-fr="Live" data-mg="Mivantana">Live</span>
-                </button>
-                <button onclick="openModal()" class="flex items-center space-x-1 text-gray-600 text-sm btn-press">
-                    <i class="fas fa-image text-green-500"></i>
-                    <span data-fr="Photo" data-mg="Sary">Photo</span>
-                </button>
-                <button onclick="showFeeling()" class="flex items-center space-x-1 text-gray-600 text-sm btn-press">
-                    <i class="fas fa-smile text-yellow-500"></i>
-                    <span data-fr="Humeur" data-mg="Toetra">Humeur</span>
-                </button>
-                <button onclick="showLocation()" class="flex items-center space-x-1 text-gray-600 text-sm btn-press">
-                    <i class="fas fa-map-marker-alt text-red-500"></i>
-                    <span data-fr="Lieu" data-mg="Toerana">Lieu</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Feed -->
-        <div id="feed"></div>
-        
-        <!-- Loading -->
-        <div class="py-8 flex justify-center">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-        </div>
-    </main>
-
-    <!-- Bottom Nav -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t px-2 py-2 flex justify-around items-center z-40">
-        <button onclick="scrollToTop()" class="text-purple-600 flex flex-col items-center text-xs btn-press w-16">
-            <i class="fas fa-home text-xl mb-1"></i>
-            <span data-fr="Accueil" data-mg="Fandraisana">Accueil</span>
-        </button>
-        <button onclick="explore()" class="text-gray-400 flex flex-col items-center text-xs btn-press w-16">
-            <i class="fas fa-compass text-xl mb-1"></i>
-            <span data-fr="Explorer" data-mg="Hikaroka">Explorer</span>
-        </button>
-        <button onclick="openModal()" class="relative -top-4 w-14 h-14 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center text-white shadow-lg btn-press">
-            <i class="fas fa-plus text-xl"></i>
-        </button>
-        <button onclick="showFriends()" class="text-gray-400 flex flex-col items-center text-xs btn-press w-16">
-            <i class="fas fa-user-friends text-xl mb-1"></i>
-            <span data-fr="Amis" data-mg="Namana">Amis</span>
-        </button>
-        <button onclick="showProfile()" class="text-gray-400 flex flex-col items-center text-xs btn-press w-16">
-            <i class="fas fa-user text-xl mb-1"></i>
-            <span data-fr="Profil" data-mg="Mombamomba">Profil</span>
-        </button>
-    </nav>
 </div>
 
-<!-- CREATE POST MODAL -->
-<div id="post-modal" class="modal" onclick="if(event.target===this)closeModal()">
-    <div class="bg-white w-full max-w-md rounded-t-3xl slide-up p-4">
-        <div class="flex justify-between items-center mb-4 border-b pb-2">
-            <button onclick="closeModal()" class="text-gray-500 btn-press"><i class="fas fa-arrow-left"></i></button>
-            <h3 class="font-bold" data-fr="Nouveau post" data-mg="Vaovao">Nouveau post</h3>
-            <button onclick="publish()" id="pub-btn" class="bg-purple-600 text-white px-4 py-1 rounded-full text-sm opacity-50" disabled data-fr="Publier" data-mg="Haparitaka">Publier</button>
-        </div>
-        
-        <textarea id="post-text" class="w-full h-32 resize-none outline-none mb-4" data-fr-placeholder="Partagez quelque chose..." data-mg-placeholder="Zarao amin'ny hafa..." placeholder="Partagez quelque chose..." oninput="check()"></textarea>
-        
-        <div id="img-preview" class="hidden mb-4 relative">
-            <img class="w-full h-48 object-cover rounded-xl">
-            <button onclick="removeImg()" class="absolute top-2 right-2 bg-black/50 text-white w-8 h-8 rounded-full btn-press"><i class="fas fa-times"></i></button>
-        </div>
-        
-        <input type="file" id="file-input" hidden accept="image/*" onchange="handleFile(event)">
-        <button onclick="document.getElementById('file-input').click()" class="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 btn-press">
-            <i class="fas fa-image mr-2"></i>
-            <span data-fr="Ajouter une photo" data-mg="Ampiana sary">Ajouter une photo</span>
-        </button>
-    </div>
-</div>
-
-<!-- PROFILE MODAL -->
-<div id="profile-modal" class="modal" onclick="if(event.target===this)closeProfile()">
-    <div class="bg-white w-full max-w-md rounded-t-3xl slide-up max-h-[90vh] overflow-y-auto">
-        <div class="relative h-32 bg-gradient-to-r from-purple-600 to-pink-600">
-            <button onclick="closeProfile()" class="absolute top-4 right-4 text-white w-10 h-10 flex items-center justify-center bg-black/20 rounded-full btn-press">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        
-        <div class="px-6 pb-6 -mt-12">
-            <div class="relative inline-block">
-                <img id="profile-avatar" src="" class="w-24 h-24 rounded-full border-4 border-white shadow-lg object-cover">
-                <label class="absolute bottom-0 right-0 w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center cursor-pointer btn-press">
-                    <i class="fas fa-camera text-sm"></i>
-                    <input type="file" hidden accept="image/*" onchange="updateProfilePhoto(event)">
-                </label>
-            </div>
-            
-            <h2 id="profile-name" class="text-2xl font-bold mt-4"></h2>
-            <p id="profile-username" class="text-gray-500"></p>
-            
-            <div class="flex justify-around my-6">
-                <div class="text-center">
-                    <div class="font-bold text-xl" id="profile-posts">0</div>
-                    <div class="text-xs text-gray-500" data-fr="Posts" data-mg="Lahatsoratra">Posts</div>
-                </div>
-                <div class="text-center cursor-pointer" onclick="showFriends()">
-                    <div class="font-bold text-xl" id="profile-friends">0</div>
-                    <div class="text-xs text-gray-500" data-fr="Amis" data-mg="Namana">Amis</div>
-                </div>
-                <div class="text-center">
-                    <div class="font-bold text-xl" id="profile-likes">0</div>
-                    <div class="text-xs text-gray-500" data-fr="J'aime" data-mg="Tiana">J'aime</div>
-                </div>
-            </div>
-            
-            <div class="space-y-3">
-                <button onclick="editProfile()" class="w-full bg-purple-600 text-white py-3 rounded-xl font-semibold btn-press" data-fr="Modifier le profil" data-mg="Hanova ny mombamomba">Modifier le profil</button>
-                <button onclick="logout()" class="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold btn-press" data-fr="Déconnexion" data-mg="Hiala">Déconnexion</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- EDIT PROFILE MODAL -->
-<div id="edit-profile-modal" class="modal" onclick="if(event.target===this)closeEditProfile()">
-    <div class="bg-white w-full max-w-md rounded-t-3xl slide-up p-6">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="font-bold text-lg" data-fr="Modifier le profil" data-mg="Hanova ny mombamomba">Modifier le profil</h3>
-            <button onclick="closeEditProfile()" class="text-gray-500"><i class="fas fa-times"></i></button>
-        </div>
-        
-        <div class="space-y-4">
-            <div>
-                <label class="block text-sm text-gray-600 mb-1" data-fr="Nom complet" data-mg="Anarana feno">Nom complet</label>
-                <input type="text" id="edit-name" class="w-full px-4 py-3 rounded-xl bg-gray-100 outline-none">
-            </div>
-            <div>
-                <label class="block text-sm text-gray-600 mb-1" data-fr="Nom d'utilisateur" data-mg="Anarana fampiasana">Nom d'utilisateur</label>
-                <input type="text" id="edit-username" class="w-full px-4 py-3 rounded-xl bg-gray-100 outline-none">
-            </div>
-            <div>
-                <label class="block text-sm text-gray-600 mb-1" data-fr="Bio" data-mg="Momba anao">Bio</label>
-                <textarea id="edit-bio" class="w-full px-4 py-3 rounded-xl bg-gray-100 outline-none resize-none h-20"></textarea>
-            </div>
-            <button onclick="saveProfile()" class="w-full bg-purple-600 text-white py-3 rounded-xl font-semibold btn-press" data-fr="Enregistrer" data-mg="Tehirizo">Enregistrer</button>
-        </div>
-    </div>
-</div>
-
-<!-- FRIENDS MODAL -->
-<div id="friends-modal" class="modal" onclick="if(event.target===this)closeFriends()">
-    <div class="bg-white w-full max-w-md rounded-t-3xl slide-up max-h-[80vh] overflow-y-auto">
-        <div class="p-4 border-b flex justify-between items-center sticky top-0 bg-white">
-            <h3 class="font-bold text-lg" data-fr="Amis" data-mg="Namana">Amis</h3>
-            <button onclick="closeFriends()" class="text-gray-500"><i class="fas fa-times"></i></button>
-        </div>
-        
-        <div class="p-4">
-            <input type="text" id="friend-search" data-fr-placeholder="Rechercher des amis..." data-mg-placeholder="Hitady namana..." placeholder="Rechercher des amis..." class="w-full px-4 py-3 rounded-xl bg-gray-100 outline-none mb-4" oninput="searchFriends()">
-            
-            <div id="friends-list" class="space-y-3">
-                <!-- Friends loaded dynamically -->
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- NOTIFICATIONS MODAL -->
-<div id="notif-modal" class="modal" onclick="if(event.target===this)closeNotif()">
-    <div class="bg-white w-full max-w-md rounded-t-3xl slide-up max-h-[80vh] overflow-y-auto">
-        <div class="p-4 border-b flex justify-between items-center sticky top-0 bg-white">
-            <h3 class="font-bold text-lg" data-fr="Notifications" data-mg="Fampahafantarana">Notifications</h3>
-            <button onclick="closeNotif()" class="text-gray-500"><i class="fas fa-times"></i></button>
-        </div>
-        <div id="notif-list" class="p-4 space-y-3">
-            <p class="text-gray-500 text-center py-8" data-fr="Aucune notification" data-mg="Tsy misy fampahafantarana">Aucune notification</p>
-        </div>
-    </div>
-</div>
-
-<!-- EXPLORE MODAL -->
-<div id="explore-modal" class="modal" onclick="if(event.target===this)closeExplore()">
-    <div class="bg-white w-full max-w-md rounded-t-3xl slide-up max-h-[90vh] overflow-y-auto">
-        <div class="p-4 border-b sticky top-0 bg-white">
-            <div class="flex items-center space-x-3">
-                <button onclick="closeExplore()" class="text-gray-500"><i class="fas fa-arrow-left"></i></button>
-                <input type="text" data-fr-placeholder="Rechercher..." data-mg-placeholder="Hitady..." placeholder="Rechercher..." class="flex-1 bg-gray-100 rounded-full px-4 py-2 outline-none">
-            </div>
-        </div>
-        <div class="p-4">
-            <h4 class="font-bold mb-3" data-fr="Tendances à Madagascar" data-mg="Malaza eto Madagasikara">Tendances à Madagascar</h4>
-            <div class="space-y-3">
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl cursor-pointer btn-press">
-                    <div>
-                        <p class="font-semibold">#Madagascar</p>
-                        <p class="text-sm text-gray-500">12.5k posts</p>
-                    </div>
-                    <i class="fas fa-chevron-right text-gray-400"></i>
-                </div>
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl cursor-pointer btn-press">
-                    <div>
-                        <p class="font-semibold">#Salegy</p>
-                        <p class="text-sm text-gray-500">8.2k posts</p>
-                    </div>
-                    <i class="fas fa-chevron-right text-gray-400"></i>
-                </div>
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl cursor-pointer btn-press">
-                    <div>
-                        <p class="font-semibold">#Antananarivo</p>
-                        <p class="text-sm text-gray-500">5.1k posts</p>
-                    </div>
-                    <i class="fas fa-chevron-right text-gray-400"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- FEELING MODAL -->
-<div id="feeling-modal" class="modal" onclick="if(event.target===this)closeFeeling()">
-    <div class="bg-white w-full max-w-md rounded-t-3xl slide-up p-6">
-        <h3 class="font-bold text-lg mb-4" data-fr="Comment vous sentez-vous ?" data-mg="Ahoana no fahatsapanao ?">Comment vous sentez-vous ?</h3>
-        <div class="grid grid-cols-4 gap-4">
-            <button onclick="selectFeeling('😊', 'Heureux')" class="text-4xl btn-press">😊</button>
-            <button onclick="selectFeeling('😢', 'Triste')" class="text-4xl btn-press">😢</button>
-            <button onclick="selectFeeling('😍', 'Amoureux')" class="text-4xl btn-press">😍</button>
-            <button onclick="selectFeeling('😎', 'Cool')" class="text-4xl btn-press">😎</button>
-            <button onclick="selectFeeling('🤔', 'Pensif')" class="text-4xl btn-press">🤔</button>
-            <button onclick="selectFeeling('😴', 'Fatigué')" class="text-4xl btn-press">😴</button>
-            <button onclick="selectFeeling('🎉', 'En fête')" class="text-4xl btn-press">🎉</button>
-            <button onclick="selectFeeling('💪', 'Motivé')" class="text-4xl btn-press">💪</button>
-        </div>
-    </div>
-</div>
-
-<!-- LOCATION MODAL -->
-<div id="location-modal" class="modal" onclick="if(event.target===this)closeLocation()">
-    <div class="bg-white w-full max-w-md rounded-t-3xl slide-up p-6">
-        <h3 class="font-bold text-lg mb-4" data-fr="Ajouter un lieu" data-mg="Ampiana toerana">Ajouter un lieu</h3>
-        <div class="space-y-3">
-            <button onclick="selectLocation('Antananarivo')" class="w-full p-4 bg-gray-50 rounded-xl text-left btn-press">
-                <i class="fas fa-map-marker-alt text-red-500 mr-3"></i>Antananarivo
-            </button>
-            <button onclick="selectLocation('Toamasina')" class="w-full p-4 bg-gray-50 rounded-xl text-left btn-press">
-                <i class="fas fa-map-marker-alt text-red-500 mr-3"></i>Toamasina
-            </button>
-            <button onclick="selectLocation('Mahajanga')" class="w-full p-4 bg-gray-50 rounded-xl text-left btn-press">
-                <i class="fas fa-map-marker-alt text-red-500 mr-3"></i>Mahajanga
-            </button>
-            <button onclick="selectLocation('Fianarantsoa')" class="w-full p-4 bg-gray-50 rounded-xl text-left btn-press">
-                <i class="fas fa-map-marker-alt text-red-500 mr-3"></i>Fianarantsoa
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- LIVE MODAL -->
-<div id="live-modal" class="modal" onclick="if(event.target===this)closeLive()">
-    <div class="bg-white w-full max-w-md rounded-t-3xl slide-up p-6 text-center">
-        <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <i class="fas fa-video text-3xl text-red-500"></i>
-        </div>
-        <h3 class="font-bold text-lg mb-2" data-fr="Démarrer un live" data-mg="Manomboka fahitalavitra mivantana">Démarrer un live</h3>
-        <p class="text-gray-500 mb-6" data-fr="Partagez un moment en direct avec vos amis" data-mg="Zarao amin'ny namana ny fotoana mivantana">Partagez un moment en direct avec vos amis</p>
-        <button onclick="startLiveStream()" class="w-full bg-red-500 text-white py-3 rounded-xl font-bold btn-press" data-fr="Démarrer maintenant" data-mg="Manomboka izao">Démarrer maintenant</button>
-        <button onclick="closeLive()" class="w-full mt-3 text-gray-500 py-3" data-fr="Annuler" data-mg="Aoka ihany">Annuler</button>
-    </div>
-</div>
-
-<!-- TOAST -->
 <div id="toast" class="toast"></div>
 
 <script>
-// ====================
-// DATA & STATE
-// ====================
-let currentUser = null;
-let users = JSON.parse(localStorage.getItem('vonona_users')) || [];
-let posts = JSON.parse(localStorage.getItem('vonona_posts')) || [];
-let likedPosts = JSON.parse(localStorage.getItem('vonona_liked')) || [];
-let friends = JSON.parse(localStorage.getItem('vonona_friends')) || [];
-let currentLang = localStorage.getItem('vonona_lang') || 'fr';
-let selectedImage = null;
-let currentFeeling = null;
-let currentLocation = null;
 
-// Sample users for "Add friends" feature
-const sampleUsers = [
-    {id: 'u1', name: 'Jean Rakoto', username: 'jean_rakoto', avatar: 'https://ui-avatars.com/api/?name=Jean+Rakoto&background=random'},
-    {id: 'u2', name: 'Marie Rasoa', username: 'marie_rasoa', avatar: 'https://ui-avatars.com/api/?name=Marie+Rasoa&background=random'},
-    {id: 'u3', name: 'Paul Randria', username: 'paul_randria', avatar: 'https://ui-avatars.com/api/?name=Paul+Randria&background=random'},
-    {id: 'u4', name: 'Sophie Rabe', username: 'sophie_rabe', avatar: 'https://ui-avatars.com/api/?name=Sophie+Rabe&background=random'},
-    {id: 'u5', name: 'Tovo Andria', username: 'tovo_andria', avatar: 'https://ui-avatars.com/api/?name=Tovo+Andria&background=random'}
-];
+// ================= STATE =================
 
-// ====================
-// LANGUAGE
-// ====================
-function changeLanguage() {
-    currentLang = document.getElementById('lang-select').value;
-    localStorage.setItem('vonona_lang', currentLang);
-    applyLanguage();
+const store={
+  currentUser:null,
+  users:JSON.parse(localStorage.getItem('users'))||[],
+  posts:JSON.parse(localStorage.getItem('posts'))||[],
+  liked:JSON.parse(localStorage.getItem('liked'))||[]
+};
+
+function save(){
+  localStorage.setItem('users',JSON.stringify(store.users));
+  localStorage.setItem('posts',JSON.stringify(store.posts));
+  localStorage.setItem('liked',JSON.stringify(store.liked));
 }
 
-function applyLanguage() {
-    document.querySelectorAll('[data-fr][data-mg]').forEach(el => {
-        if (el.hasAttribute('data-fr-placeholder')) {
-            el.placeholder = el.getAttribute(currentLang === 'mg' ? 'data-mg-placeholder' : 'data-fr-placeholder');
-        } else {
-            el.textContent = el.getAttribute(currentLang === 'mg' ? 'data-mg' : 'data-fr');
-        }
-    });
+// ================= UTILS =================
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
 }
 
-// ====================
-// AUTH
-// ====================
-function showRegister() {
-    document.getElementById('auth-screen').classList.add('hidden');
-    document.getElementById('register-screen').classList.remove('hidden');
+function escapeHTML(str){
+  return str.replace(/[&<>"']/g,m=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;',
+    '"':'&quot;',"'":'&#039;'
+  })[m]);
 }
 
-function showLogin() {
-    document.getElementById('register-screen').classList.add('hidden');
-    document.getElementById('auth-screen').classList.remove('hidden');
+async function hashPassword(password){
+  const encoder=new TextEncoder();
+  const data=encoder.encode(password);
+  const hash=await crypto.subtle.digest("SHA-256",data);
+  return Array.from(new Uint8Array(hash))
+    .map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 
-function previewAvatar(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-        document.getElementById('reg-avatar-preview').src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
+// ================= AUTH =================
 
-function register() {
-    const name = document.getElementById('reg-name').value.trim();
-    const username = document.getElementById('reg-username').value.trim();
-    const password = document.getElementById('reg-password').value;
-    const confirm = document.getElementById('reg-confirm').value;
-    const avatarFile = document.getElementById('reg-avatar').files[0];
-    
-    if (!name || !username || !password) {
-        toast(currentLang === 'mg' ? 'Fenoy ny fanazavana rehetra' : 'Remplissez tous les champs');
-        return;
-    }
-    
-    if (password !== confirm) {
-        toast(currentLang === 'mg' ? 'Tsy mitovy ny tenimiafina' : 'Les mots de passe ne correspondent pas');
-        return;
-    }
-    
-    if (users.find(u => u.username === username)) {
-        toast(currentLang === 'mg' ? 'Efa misy io anarana io' : 'Ce nom d\'utilisateur existe déjà');
-        return;
-    }
-    
-    const newUser = {
-        id: Date.now().toString(),
+async function autoLogin(){
+  let user=localStorage.getItem("currentUser");
+  if(user){
+    store.currentUser=JSON.parse(user);
+  }else{
+    const name=prompt("Nom ?");
+    const pass=prompt("Mot de passe ?");
+    const hash=await hashPassword(pass);
+
+    let found=store.users.find(u=>u.name===name && u.password===hash);
+
+    if(!found){
+      found={
+        id:Date.now(),
         name,
-        username,
-        password,
-        avatar: avatarFile ? null : `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
-        bio: ''
-    };
-    
-    if (avatarFile) {
-        const reader = new FileReader();
-        reader.onload = e => {
-            newUser.avatar = e.target.result;
-            users.push(newUser);
-            localStorage.setItem('vonona_users', JSON.stringify(users));
-            currentUser = newUser;
-            loginUser();
-        };
-        reader.readAsDataURL(avatarFile);
-    } else {
-        users.push(newUser);
-        localStorage.setItem('vonona_users', JSON.stringify(users));
-        currentUser = newUser;
-        loginUser();
+        password:hash
+      };
+      store.users.push(found);
+      save();
     }
+    store.currentUser=found;
+    localStorage.setItem("currentUser",JSON.stringify(found));
+  }
 }
 
-function login() {
-    const username = document.getElementById('auth-name').value.trim();
-    const password = document.getElementById('auth-password').value;
-    
-    const user = users.find(u => (u.username === username || u.name === username) && u.password === password);
-    
-    if (!user) {
-        // Demo mode - create temporary user
-        currentUser = {
-            id: 'demo_' + Date.now(),
-            name: username || 'Invité',
-            username: username ? username.toLowerCase().replace(/\s/g, '_') : 'invite',
-            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(username || 'Invité')}&background=random`,
-            bio: ''
-        };
-    } else {
-        currentUser = user;
-    }
-    
-    loginUser();
+function logout(){
+  localStorage.removeItem("currentUser");
+  location.reload();
 }
 
-function loginUser() {
-    localStorage.setItem('vonona_current_user', JSON.stringify(currentUser));
-    showApp();
-    toast(currentLang === 'mg' ? 'Tonga soa !' : 'Bienvenue !');
-}
+// ================= IMAGE COMPRESSION =================
 
-function logout() {
-    localStorage.removeItem('vonona_current_user');
-    location.reload();
-}
-
-function showApp() {
-    document.getElementById('auth-screen').classList.add('hidden');
-    document.getElementById('register-screen').classList.add('hidden');
-    document.getElementById('main-app').classList.remove('hidden');
-    
-    document.getElementById('header-avatar').src = currentUser.avatar;
-    document.getElementById('create-avatar').src = currentUser.avatar;
-    document.getElementById('story-avatar').src = currentUser.avatar;
-    
-    updateProfileUI();
-    renderFeed();
-    applyLanguage();
-}
-
-// ====================
-// PROFILE
-// ====================
-function updateProfileUI() {
-    document.getElementById('profile-avatar').src = currentUser.avatar;
-    document.getElementById('profile-name').textContent = currentUser.name;
-    document.getElementById('profile-username').textContent = '@' + currentUser.username;
-    
-    const userPosts = posts.filter(p => p.userId === currentUser.id).length;
-    document.getElementById('profile-posts').textContent = userPosts;
-    document.getElementById('profile-friends').textContent = friends.length;
-    
-    const totalLikes = posts.filter(p => p.userId === currentUser.id).reduce((sum, p) => sum + p.likes, 0);
-    document.getElementById('profile-likes').textContent = totalLikes;
-}
-
-function showProfile() {
-    updateProfileUI();
-    document.getElementById('profile-modal').classList.add('active');
-}
-
-function closeProfile() {
-    document.getElementById('profile-modal').classList.remove('active');
-}
-
-function editProfile() {
-    document.getElementById('edit-name').value = currentUser.name;
-    document.getElementById('edit-username').value = currentUser.username;
-    document.getElementById('edit-bio').value = currentUser.bio || '';
-    document.getElementById('edit-profile-modal').classList.add('active');
-}
-
-function closeEditProfile() {
-    document.getElementById('edit-profile-modal').classList.remove('active');
-}
-
-function saveProfile() {
-    currentUser.name = document.getElementById('edit-name').value.trim();
-    currentUser.username = document.getElementById('edit-username').value.trim();
-    currentUser.bio = document.getElementById('edit-bio').value.trim();
-    
-    const index = users.findIndex(u => u.id === currentUser.id);
-    if (index !== -1) {
-        users[index] = currentUser;
-        localStorage.setItem('vonona_users', JSON.stringify(users));
-    }
-    localStorage.setItem('vonona_current_user', JSON.stringify(currentUser));
-    
-    updateProfileUI();
-    closeEditProfile();
-    renderFeed();
-    toast(currentLang === 'mg' ? 'Voaova ny mombamomba' : 'Profil mis à jour');
-}
-
-function updateProfilePhoto(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = e => {
-        currentUser.avatar = e.target.result;
-        
-        const index = users.findIndex(u => u.id === currentUser.id);
-        if (index !== -1) {
-            users[index].avatar = e.target.result;
-            localStorage.setItem('vonona_users', JSON.stringify(users));
-        }
-        localStorage.setItem('vonona_current_user', JSON.stringify(currentUser));
-        
-        updateProfileUI();
-        document.getElementById('header-avatar').src = e.target.result;
-        document.getElementById('create-avatar').src = e.target.result;
-        toast(currentLang === 'mg' ? 'Voaova ny sary' : 'Photo mise à jour');
+function compressImage(file,maxWidth=800){
+  return new Promise(resolve=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        const canvas=document.createElement('canvas');
+        const scale=maxWidth/img.width;
+        canvas.width=maxWidth;
+        canvas.height=img.height*scale;
+        canvas.getContext('2d')
+          .drawImage(img,0,0,canvas.width,canvas.height);
+        resolve(canvas.toDataURL('image/jpeg',0.7));
+      };
+      img.src=e.target.result;
     };
     reader.readAsDataURL(file);
+  });
 }
 
-// ====================
-// FRIENDS
-// ====================
-function showFriends() {
-    renderFriendsList();
-    document.getElementById('friends-modal').classList.add('active');
-}
+// ================= POSTS =================
 
-function closeFriends() {
-    document.getElementById('friends-modal').classList.remove('active');
-}
+let selectedImage=null;
 
-function renderFriendsList() {
-    const container = document.getElementById('friends-list');
-    const search = document.getElementById('friend-search').value.toLowerCase();
-    
-    // Filter out current user and already friends
-    const availableUsers = sampleUsers.filter(u => {
-        if (friends.find(f => f.id === u.id)) return false;
-        if (search && !u.name.toLowerCase().includes(search) && !u.username.toLowerCase().includes(search)) return false;
-        return true;
-    });
-    
-    if (availableUsers.length === 0) {
-        container.innerHTML = `<p class="text-gray-500 text-center py-4">${currentLang === 'mg' ? 'Tsy misy namana hita' : 'Aucun utilisateur trouvé'}</p>`;
-        return;
-    }
-    
-    container.innerHTML = availableUsers.map(u => `
-        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-            <div class="flex items-center space-x-3">
-                <img src="${u.avatar}" class="w-10 h-10 rounded-full">
-                <div>
-                    <p class="font-semibold text-sm">${u.name}</p>
-                    <p class="text-xs text-gray-500">@${u.username}</p>
-                </div>
-            </div>
-            <button onclick="addFriend('${u.id}')" class="bg-purple-600 text-white px-4 py-2 rounded-full text-sm btn-press">
-                ${currentLang === 'mg' ? 'Asio namana' : 'Ajouter'}
-            </button>
-        </div>
-    `).join('');
-}
-
-function searchFriends() {
-    renderFriendsList();
-}
-
-function addFriend(userId) {
-    const user = sampleUsers.find(u => u.id === userId);
-    if (user) {
-        friends.push(user);
-        localStorage.setItem('vonona_friends', JSON.stringify(friends));
-        renderFriendsList();
-        updateProfileUI();
-        toast(currentLang === 'mg' ? 'Namana vaovao !' : 'Nouvel ami ajouté !');
-    }
-}
-
-// ====================
-// POSTS
-// ====================
-function renderFeed() {
-    const container = document.getElementById('feed');
-    
-    if (posts.length === 0) {
-        container.innerHTML = `
-            <div class="text-center py-12 text-white/80">
-                <i class="fas fa-inbox text-4xl mb-4 opacity-50"></i>
-                <p>${currentLang === 'mg' ? 'Tsy misy lahatsoratra' : 'Aucune publication'}</p>
-                <p class="text-sm mt-2 opacity-75">${currentLang === 'mg' ? 'Banao ny voalohany !' : 'Soyez le premier !'}</p>
-            </div>
-        `;
-        return;
-    }
-    
-    container.innerHTML = posts.map(p => {
-        const hasLiked = likedPosts.includes(p.id);
-        const isFriend = friends.find(f => f.id === p.userId);
-        const isMe = p.userId === currentUser.id;
-        
-        return `
-        <div class="bg-white rounded-2xl shadow p-4 mb-4">
-            <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center space-x-3">
-                    <img src="${p.avatar}" class="w-10 h-10 rounded-full object-cover">
-                    <div>
-                        <h4 class="font-bold text-sm">${p.name}</h4>
-                        <p class="text-xs text-gray-500">${p.time}${p.location ? ' • ' + p.location : ''}</p>
-                    </div>
-                </div>
-                ${!isMe && !isFriend ? `<button onclick="addFriendByPost('${p.userId}')" class="text-purple-600 text-sm font-semibold btn-press">${currentLang === 'mg' ? 'Asio namana' : 'Ajouter'}</button>` : ''}
-            </div>
-            
-            ${p.feeling ? `<p class="text-gray-600 text-sm mb-2">${p.feeling}</p>` : ''}
-            <p class="text-gray-800 mb-3">${p.text}</p>
-            
-            ${p.image ? `<img src="${p.image}" class="w-full rounded-xl mb-3 object-cover max-h-64">` : ''}
-            
-            <div class="flex space-x-4 pt-2 border-t">
-                <button onclick="likePost(${p.id})" class="${hasLiked ? 'text-red-500' : 'text-gray-500'} flex items-center space-x-1 btn-press">
-                    <i class="${hasLiked ? 'fas' : 'far'} fa-heart"></i>
-                    <span>${p.likes}</span>
-                </button>
-                <button class="text-gray-500 flex items-center space-x-1 btn-press">
-                    <i class="far fa-comment"></i>
-                    <span>${p.comments || 0}</span>
-                </button>
-                <button onclick="sharePost(${p.id})" class="text-gray-500 flex items-center space-x-1 btn-press">
-                    <i class="fas fa-share"></i>
-                </button>
-            </div>
-        </div>
-    `}).join('');
-}
-
-function likePost(id) {
-    if (likedPosts.includes(id)) {
-        toast(currentLang === 'mg' ? 'Efa tianao io' : 'Déjà aimé');
-        return;
-    }
-    
-    const post = posts.find(p => p.id === id);
-    if (post) {
-        post.likes++;
-        likedPosts.push(id);
-        localStorage.setItem('vonona_posts', JSON.stringify(posts));
-        localStorage.setItem('vonona_liked', JSON.stringify(likedPosts));
-        renderFeed();
-        toast('❤️');
-    }
-}
-
-function addFriendByPost(userId) {
-    // In real app, would fetch user details
-    toast(currentLang === 'mg' ? 'Fanampiana: Mampidira ny pejy mombamomba azy' : 'Suggestion: Visitez son profil');
-}
-
-function sharePost(id) {
-    if (navigator.share) {
-        navigator.share({
-            title: 'Vonona',
-            text: 'Regardez cette publication sur Vonona !',
-            url: window.location.href
-        });
-    } else {
-        navigator.clipboard.writeText(window.location.href);
-        toast(currentLang === 'mg' ? 'Nakarina ny rohy' : 'Lien copié');
-    }
-}
-
-// ====================
-// CREATE POST
-// ====================
-function openModal() {
-    document.getElementById('post-modal').classList.add('active');
-}
-
-function closeModal() {
-    document.getElementById('post-modal').classList.remove('active');
-    document.getElementById('post-text').value = '';
-    removeImg();
-    currentFeeling = null;
-    currentLocation = null;
-}
-
-function check() {
-    const text = document.getElementById('post-text').value.trim();
-    const btn = document.getElementById('pub-btn');
-    btn.disabled = !text && !selectedImage;
-    btn.classList.toggle('opacity-50', !text && !selectedImage);
-}
-
-function handleFile(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    if (file.size > 5 * 1024 * 1024) {
-        toast(currentLang === 'mg' ? 'Lehibe loatra ny sary (5Mo max)' : 'Image trop grande (5Mo max)');
-        return;
-    }
-    
-    const reader = new FileReader();
-    reader.onload = e => {
-        selectedImage = e.target.result;
-        document.querySelector('#img-preview img').src = selectedImage;
-        document.getElementById('img-preview').classList.remove('hidden');
-        check();
-    };
-    reader.readAsDataURL(file);
-}
-
-function removeImg() {
-    selectedImage = null;
-    document.getElementById('img-preview').classList.add('hidden');
-    check();
-}
-
-function publish() {
-    const text = document.getElementById('post-text').value.trim();
-    if (!text && !selectedImage) return;
-    
-    let finalText = text;
-    if (currentFeeling) finalText = currentFeeling + ' ' + finalText;
-    
-    const newPost = {
-        id: Date.now(),
-        userId: currentUser.id,
-        name: currentUser.name,
-        avatar: currentUser.avatar,
-        text: finalText,
-        image: selectedImage,
-        feeling: currentFeeling,
-        location: currentLocation,
-        likes: 0,
-        comments: 0,
-        time: new Date().toLocaleString(currentLang === 'mg' ? 'mg-MG' : 'fr-FR', {hour: '2-digit', minute:'2-digit'})
-    };
-    
-    posts.unshift(newPost);
-    localStorage.setItem('vonona_posts', JSON.stringify(posts));
-    
-    renderFeed();
-    closeModal();
-    updateProfileUI();
-    toast(currentLang === 'mg' ? 'Voaparitaka !' : 'Publié !');
-    window.scrollTo(0, 0);
-}
-
-// ====================
-// FEATURES
-// ====================
-function showNotifications() {
-    document.getElementById('notif-modal').classList.add('active');
-    document.getElementById('notif-badge').classList.add('hidden');
-}
-
-function closeNotif() {
-    document.getElementById('notif-modal').classList.remove('active');
-}
-
-function explore() {
-    document.getElementById('explore-modal').classList.add('active');
-}
-
-function closeExplore() {
-    document.getElementById('explore-modal').classList.remove('active');
-}
-
-function showFeeling() {
-    document.getElementById('feeling-modal').classList.add('active');
-}
-
-function closeFeeling() {
-    document.getElementById('feeling-modal').classList.remove('active');
-}
-
-function selectFeeling(emoji, text) {
-    currentFeeling = emoji + ' se sent ' + text;
-    closeFeeling();
-    openModal();
-    check();
-}
-
-function showLocation() {
-    document.getElementById('location-modal').classList.add('active');
-}
-
-function closeLocation() {
-    document.getElementById('location-modal').classList.remove('active');
-}
-
-function selectLocation(loc) {
-    currentLocation = loc;
-    closeLocation();
-    openModal();
-    toast(currentLang === 'mg' ? 'Toerana: ' + loc : 'Lieu: ' + loc);
-}
-
-function startLive() {
-    document.getElementById('live-modal').classList.add('active');
-}
-
-function closeLive() {
-    document.getElementById('live-modal').classList.remove('active');
-}
-
-function startLiveStream() {
-    toast(currentLang === 'mg' ? 'Fahitalavitra mivantana manomboka...' : 'Démarrage du live...');
-    closeLive();
-}
-
-function openCamera() {
-    toast(currentLang === 'mg' ? 'Sokafy ny fakantsary' : 'Ouverture de la caméra...');
-}
-
-function scrollToTop() {
-    window.scrollTo({top: 0, behavior: 'smooth'});
-}
-
-// ====================
-// UTILS
-// ====================
-function toast(message) {
-    const t = document.getElementById('toast');
-    t.textContent = message;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 3000);
-}
-
-// ====================
-// INIT
-// ====================
-document.addEventListener('DOMContentLoaded', () => {
-    const savedUser = localStorage.getItem('vonona_current_user');
-    if (savedUser) {
-        currentUser = JSON.parse(savedUser);
-        showApp();
-    } else {
-        applyLanguage();
-    }
+document.getElementById('fileInput').addEventListener('change',async e=>{
+  const file=e.target.files[0];
+  if(!file) return;
+  selectedImage=await compressImage(file);
+  document.getElementById('previewImg').src=selectedImage;
+  document.getElementById('imgPreview').classList.remove('hidden');
 });
-</script>
 
+function publish(){
+  const text=document.getElementById('postText').value.trim();
+  if(!text && !selectedImage){
+    toast("Post vide");
+    return;
+  }
+
+  const post={
+    id:Date.now(),
+    user:store.currentUser.name,
+    text,
+    image:selectedImage,
+    likes:0
+  };
+
+  store.posts.unshift(post);
+  save();
+  render();
+  document.getElementById('postText').value='';
+  document.getElementById('imgPreview').classList.add('hidden');
+  selectedImage=null;
+}
+
+function render(){
+  const feed=document.getElementById('feed');
+  feed.innerHTML='';
+
+  store.posts.forEach(p=>{
+    const liked=store.liked.includes(p.id);
+
+    const div=document.createElement('div');
+    div.className="card p-4 mb-4";
+    div.innerHTML=`
+      <h4 class="font-bold mb-2">${escapeHTML(p.user)}</h4>
+      <p class="mb-3">${escapeHTML(p.text)}</p>
+      ${p.image?`<img loading="lazy" 
+        src="${p.image}" 
+        class="rounded-xl mb-3 w-full object-cover max-h-80">`:''}
+      <button id="like-${p.id}"
+      class="${liked?'text-red-500':'text-gray-500'}">
+      ❤️ ${p.likes}
+      </button>
+    `;
+
+    div.querySelector(`#like-${p.id}`)
+      .addEventListener('click',()=>likePost(p.id));
+
+    feed.appendChild(div);
+  });
+}
+
+function likePost(id){
+  if(store.liked.includes(id)){
+    toast("Déjà aimé");
+    return;
+  }
+
+  const post=store.posts.find(p=>p.id===id);
+  if(!post) return;
+
+  post.likes++;
+  store.liked.push(id);
+  save();
+
+  const btn=document.getElementById(`like-${id}`);
+  btn.textContent=`❤️ ${post.likes}`;
+  btn.classList.add('text-red-500');
+}
+
+// ================= INIT =================
+
+(async()=>{
+  await autoLogin();
+  render();
+})();
+
+</script>
 </body>
 </html>
