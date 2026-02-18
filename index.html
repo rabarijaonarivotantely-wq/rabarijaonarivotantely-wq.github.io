@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Vonona - Le réseau social de la communauté malgache">
+    <meta name="theme-color" content="#7C3AED">
+    
+    <title>Vonona - Réseau Social Malgache</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#7C3AED',
+                        secondary: '#EC4899',
+                        accent: '#F59E0B'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* Scrollbar personnalisée */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3);
+            border-radius: 3px;
+        }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 50;
+            justify-content: center;
+            align-items: flex-end;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .slide-up {
+            animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.4s ease forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .like-anim {
+            animation: likeBounce 0.4s ease;
+        }
+        
+        @keyframes likeBounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
+        
+        .heart-particle {
+            position: fixed;
+            pointer-events: none;
+            color: #ef4444;
+            font-size: 24px;
+            z-index: 100;
+            animation: floatHeart 1s ease-out forwards;
+        }
+        
+        @keyframes floatHeart {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
+        }
+        
+        .btn-press:active {
+            transform: scale(0.95);
+            opacity: 0.8;
+        }
+        
+        .loading-skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 14px;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            max-width: 90%;
+            text-align: center;
+        }
+        
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        
+        .story-ring {
+            background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+            padding: 2px;
+            border-radius: 50%;
+        }
+        
+        .story-ring-viewed {
+            background: #e5e7eb;
+            padding: 2px;
+            border-radius: 50%;
+        }
+        
+        .video-container {
+            position: relative;
+            background: #000;
+        }
+        
+        .video-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            padding: 16px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .video-container:hover .video-controls,
+        .video-container.show-controls .video-controls {
+            opacity: 1;
+        }
+        
+        .progress-bar {
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 2px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #ef4444;
+            border-radius: 2px;
+            width: 0%;
+            position: relative;
+        }
+        
+        .progress-handle {
+            position: absolute;
+            right: -6px;
+            top: -4px;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .video-container.show-controls .progress-handle {
+            opacity: 1;
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 640px) {
+            .mobile-nav {
+                display: flex !important;
+            }
+            .desktop-nav {
+                display: none !important;
+            }
+        }
+        
+        @media (min-width: 641px) {
+            .mobile-nav {
+                display: none !important;
+            }
+            .desktop-nav {
+                display: flex !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="antialiased">
+
+    <!-- AUTH SCREEN -->
+    <div id="auth-screen" class="fixed inset-0 z-50 bg-gradient-to-br from-purple-600 via-purple-700 to-pink-600 flex items-center justify-center p-4">
+        <div class="w-full max-w-md">
+            <div class="text-center mb-8">
+                <div class="w-24 h-24 bg-white rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-2xl transform rotate-3">
+                    <i class="fas fa-leaf text-5xl text-purple-600"></i>
+                </div>
+                <h1 class="text-4xl font-bold text-white mb-2">Vonona</h1>
+                <p class="text-purple-100 text-lg">Le réseau social de Madagascar</p>
+            </div>
+            
+            <div class="bg-white/10 backdrop-blur-lg rounded-3xl p-6 border border-white/20">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-white text-sm font-medium mb-2">Nom d'utilisateur</label>
+                        <input type="text" id="auth-username" placeholder="Entrez votre nom" 
+                            class="w-full px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/60 outline-none focus:bg-white/30 transition">
+                    </div>
+                    <div>
+                        <label class="block text-white text-sm font-medium mb-2">Email (optionnel)</label>
+                        <input type="email" placeholder="email@exemple.mg" 
+                            class="w-full px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/60 outline-none focus:bg-white/30 transition">
+                    </div>
+                    <button onclick="login()" class="w-full bg-white text-purple-600 font-bold py-3 rounded-xl hover:bg-purple-50 transition transform hover:scale-[1.02] btn-press">
+                        Rejoindre Vonona
+                    </button>
+                </div>
+                
+                <div class="mt-6 text-center">
+                    <p class="text-white/60 text-sm">En rejoignant, vous acceptez nos conditions d'utilisation</p>
+                </div>
+            </div>
+            
+            <div class="mt-8 text-center">
+                <p class="text-white/80 text-sm">🇲🇬 Communauté malgache • 100% gratuite</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP (Hidden until auth) -->
+    <div id="main-app" class="hidden">
+        
+        <!-- Desktop Navbar -->
+        <nav class="glass fixed top-0 w-full shadow-lg z-40 h-16 desktop-nav items-center px-6 justify-between">
+            <div class="flex items-center space-x-8">
+                <div class="flex items-center space-x-2 cursor-pointer" onclick="scrollToTop()">
+                    <div class="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                        <i class="fas fa-leaf text-lg"></i>
+                    </div>
+                    <h1 class="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Vonona</h1>
+                </div>
+                
+                <div class="hidden md:flex items-center bg-gray-100 rounded-full px-4 py-2 w-64">
+                    <i class="fas fa-search text-gray-400 mr-2"></i>
+                    <input type="text" placeholder="Rechercher..." class="bg-transparent outline-none text-sm w-full">
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <button class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-purple-100 hover:text-purple-600 transition btn-press relative">
+                    <i class="fas fa-bell"></i>
+                    <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                </button>
+                <button class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-purple-100 hover:text-purple-600 transition btn-press">
+                    <i class="fas fa-envelope"></i>
+                </button>
+                <div class="flex items-center space-x-2 cursor-pointer" onclick="showProfile()">
+                    <img id="nav-avatar" src="https://i.pravatar.cc/150?img=8" class="w-10 h-10 rounded-full border-2 border-purple-500 shadow-md object-cover">
+                    <span id="nav-username" class="font-semibold text-sm hidden lg:block">Rakoto</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Mobile Header -->
+        <nav class="glass fixed top-0 w-full shadow-lg z-40 h-14 mobile-nav items-center px-4 justify-between">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center text-white">
+                    <i class="fas fa-leaf"></i>
+                </div>
+                <h1 class="text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Vonona</h1>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 btn-press">
+                    <i class="fas fa-search text-sm"></i>
+                </button>
+                <button class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 relative btn-press">
+                    <i class="fas fa-bell text-sm"></i>
+                    <span class="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full border border-white"></span>
+                </button>
+                <img id="mobile-nav-avatar" src="https://i.pravatar.cc/150?img=8" class="w-9 h-9 rounded-full border-2 border-purple-500 object-cover">
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="max-w-2xl mx-auto pt-16 md:pt-20 px-4 pb-24">
+            
+            <!-- Stories (Mobile) -->
+            <div class="mobile-nav bg-white rounded-2xl shadow-lg p-4 mb-4 overflow-x-auto">
+                <div class="flex space-x-4" style="min-width: max-content;">
+                    <div class="flex flex-col items-center space-y-1 cursor-pointer" onclick="openCamera()">
+                        <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center border-2 border-dashed border-gray-300 relative">
+                            <img id="story-avatar" src="https://i.pravatar.cc/150?img=8" class="w-14 h-14 rounded-full object-cover">
+                            <div class="absolute bottom-0 right-0 w-5 h-5 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs border-2 border-white">
+                                <i class="fas fa-plus"></i>
+                            </div>
+                        </div>
+                        <span class="text-xs text-gray-600">Votre story</span>
+                    </div>
+                    
+                    <div class="flex flex-col items-center space-y-1 cursor-pointer" onclick="viewStory('Marie', 'https://i.pravatar.cc/150?img=5', 'image')">
+                        <div class="story-ring">
+                            <img src="https://i.pravatar.cc/150?img=5" class="w-14 h-14 rounded-full border-2 border-white object-cover">
+                        </div>
+                        <span class="text-xs text-gray-600">Marie</span>
+                    </div>
+                    
+                    <div class="flex flex-col items-center space-y-1 cursor-pointer" onclick="viewStory('Jean', 'https://i.pravatar.cc/150?img=3', 'video')">
+                        <div class="story-ring">
+                            <img src="https://i.pravatar.cc/150?img=3" class="w-14 h-14 rounded-full border-2 border-white object-cover">
+                        </div>
+                        <span class="text-xs text-gray-600">Jean</span>
+                    </div>
+                    
+                    <div class="flex flex-col items-center space-y-1 cursor-pointer">
+                        <div class="story-ring-viewed">
+                            <img src="https://i.pravatar.cc/150?img=9" class="w-14 h-14 rounded-full border-2 border-white object-cover">
+                        </div>
+                        <span class="text-xs text-gray-600">Sophie</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create Post -->
+            <div class="bg-white p-4 rounded-2xl shadow-lg mb-6 border border-gray-100">
+                <div class="flex space-x-3 items-center">
+                    <img id="create-avatar" src="https://i.pravatar.cc/150?img=8" class="w-12 h-12 rounded-full border-2 border-purple-100 object-cover">
+                    <button onclick="openModal()" class="flex-1 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-purple-50 hover:to-pink-50 text-left px-5 py-3 rounded-full text-gray-500 border border-gray-200 transition-all duration-300 shadow-sm btn-press">
+                        <span class="flex items-center space-x-2">
+                            <i class="fas fa-pen text-purple-400"></i>
+                            <span>Quoi de neuf pour Madagascar ?</span>
+                        </span>
+                    </button>
+                </div>
+                
+                <div class="flex justify-around mt-4 pt-3 border-t border-gray-100">
+                    <button class="flex items-center space-x-2 text-gray-600 hover:text-red-500 transition btn-press px-4 py-2 rounded-lg hover:bg-red-50">
+                        <i class="fas fa-video text-red-500"></i>
+                        <span class="text-sm font-medium">Live</span>
+                    </button>
+                    <button onclick="openModal()" class="flex items-center space-x-2 text-gray-600 hover:text-green-500 transition btn-press px-4 py-2 rounded-lg hover:bg-green-50">
+                        <i class="fas fa-image text-green-500"></i>
+                        <span class="text-sm font-medium">Photo</span>
+                    </button>
+                    <button class="flex items-center space-x-2 text-gray-600 hover:text-yellow-500 transition btn-press px-4 py-2 rounded-lg hover:bg-yellow-50">
+                        <i class="fas fa-smile text-yellow-500"></i>
+                        <span class="text-sm font-medium">Humeur</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="flex space-x-2 mb-4 overflow-x-auto pb-2">
+                <button class="bg-white text-purple-600 px-4 py-2 rounded-full text-sm font-semibold shadow-sm whitespace-nowrap">Tout</button>
+                <button class="bg-white/20 text-white hover:bg-white/30 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition">Populaire</button>
+                <button class="bg-white/20 text-white hover:bg-white/30 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition">Récents</button>
+                <button class="bg-white/20 text-white hover:bg-white/30 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition">Amis</button>
+            </div>
+
+            <!-- Posts Feed -->
+            <div id="posts-container" class="space-y-4">
+                <!-- Posts injected here -->
+            </div>
+
+            <!-- Loading -->
+            <div id="loader" class="py-8 flex justify-center">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+            </div>
+        </main>
+
+        <!-- Mobile Bottom Nav -->
+        <nav class="mobile-nav fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-2 flex justify-around items-center z-40 pb-safe">
+            <button class="text-purple-600 flex flex-col items-center space-y-1 btn-press w-16" onclick="scrollToTop()">
+                <i class="fas fa-home text-xl"></i>
+                <span class="text-[10px] font-medium">Accueil</span>
+            </button>
+            <button class="text-gray-400 flex flex-col items-center space-y-1 btn-press w-16">
+                <i class="fas fa-compass text-xl"></i>
+                <span class="text-[10px] font-medium">Explorer</span>
+            </button>
+            <button onclick="openModal()" class="relative -top-5 w-14 h-14 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center text-white shadow-lg btn-press transform hover:scale-105 transition">
+                <i class="fas fa-plus text-xl"></i>
+            </button>
+            <button class="text-gray-400 flex flex-col items-center space-y-1 btn-press w-16">
+                <i class="fas fa-bell text-xl"></i>
+                <span class="text-[10px] font-medium">Notifs</span>
+            </button>
+            <button class="text-gray-400 flex flex-col items-center space-y-1 btn-press w-16" onclick="showProfile()">
+                <i class="fas fa-user text-xl"></i>
+                <span class="text-[10px] font-medium">Profil</span>
+            </button>
+        </nav>
+
+    </div>
+
+    <!-- CREATE POST MODAL -->
+    <div id="post-modal" class="modal" onclick="if(event.target === this) closeModal()">
+        <div class="bg-white w-full max-w-lg rounded-t-3xl slide-up max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white z-10 px-4 py-3 border-b flex justify-between items-center">
+                <button onclick="closeModal()" class="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition btn-press">
+                    <i class="fas fa-arrow-left text-gray-600"></i>
+                </button>
+                <h3 class="font-bold text-lg">Créer une publication</h3>
+                <button onclick="publishPost()" id="publish-btn" class="bg-purple-600 text-white px-6 py-2 rounded-full font-semibold opacity-50 cursor-not-allowed transition btn-press" disabled>
+                    Publier
+                </button>
+            </div>
+
+            <div class="p-4">
+                <div class="flex items-center space-x-3 mb-4">
+                    <img id="modal-avatar" src="https://i.pravatar.cc/150?img=8" class="w-10 h-10 rounded-full object-cover">
+                    <div>
+                        <h4 id="modal-username" class="font-semibold">Rakoto Andry</h4>
+                        <select class="text-xs bg-gray-100 rounded-lg px-2 py-1 border-none outline-none mt-1">
+                            <option>🌎 Public</option>
+                            <option>👥 Amis</option>
+                            <option>🔒 Privé</option>
+                        </select>
+                    </div>
+                </div>
+
+                <textarea id="post-text" class="w-full h-32 p-2 text-lg resize-none outline-none placeholder-gray-400 mb-4" 
+                    placeholder="Partagez quelque chose avec la communauté malgache..." oninput="checkPostInput()"></textarea>
+
+                <div id="image-preview-container" class="hidden relative mb-4 rounded-xl overflow-hidden shadow-lg">
+                    <img id="image-preview" class="w-full h-64 object-cover">
+                    <button onclick="removeImage()" class="absolute top-3 right-3 bg-black/60 hover:bg-black/80 text-white w-10 h-10 rounded-full flex items-center justify-center transition btn-press">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="border rounded-xl p-4 bg-gray-50">
+                    <p class="text-sm text-gray-500 mb-3 font-medium">Ajouter à votre publication</p>
+                    <div class="flex justify-between">
+                        <label class="cursor-pointer w-12 h-12 rounded-full bg-green-100 hover:bg-green-200 flex items-center justify-center text-green-600 transition btn-press">
+                            <i class="fas fa-image text-xl"></i>
+                            <input type="file" id="image-input" hidden accept="image/*" onchange="handleImageSelect(event)">
+                        </label>
+                        <button class="w-12 h-12 rounded-full bg-blue-100 hover:bg-blue-200 flex items-center justify-center text-blue-600 transition btn-press">
+                            <i class="fas fa-video text-xl"></i>
+                        </button>
+                        <button class="w-12 h-12 rounded-full bg-yellow-100 hover:bg-yellow-200 flex items-center justify-center text-yellow-600 transition btn-press">
+                            <i class="fas fa-smile text-xl"></i>
+                        </button>
+                        <button class="w-12 h-12 rounded-full bg-red-100 hover:bg-red-200 flex items-center justify-center text-red-600 transition btn-press">
+                            <i class="fas fa-map-marker-alt text-xl"></i>
+                        </button>
+                        <button class="w-12 h-12 rounded-full bg-purple-100 hover:bg-purple-200 flex items-center justify-center text-purple-600 transition btn-press">
+                            <i class="fas fa-gift text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STORY VIEWER -->
+    <div id="story-viewer" class="fixed inset-0 bg-black z-50 hidden">
+        <div class="absolute top-0 left-0 right-0 h-1 bg-gray-800 z-10">
+            <div id="story-progress" class="h-full bg-white w-0 transition-all duration-[5000ms] ease-linear"></div>
+        </div>
+        
+        <div class="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
+            <div class="flex items-center space-x-3">
+                <img id="story-viewer-avatar" src="" class="w-10 h-10 rounded-full border-2 border-white">
+                <span id="story-viewer-username" class="text-white font-semibold text-shadow"></span>
+            </div>
+            <button onclick="closeStory()" class="text-white w-10 h-10 flex items-center justify-center bg-white/20 rounded-full btn-press">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <div id="story-content" class="w-full h-full flex items-center justify-center bg-gray-900">
+            <!-- Content injected here -->
+        </div>
+        
+        <div class="absolute bottom-8 left-4 right-4">
+            <div class="bg-white/20 backdrop-blur-md rounded-full px-4 py-3 flex items-center space-x-3">
+                <input type="text" placeholder="Envoyer un message..." class="bg-transparent text-white placeholder-white/70 outline-none flex-1 text-sm">
+                <button class="text-white btn-press">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- IMAGE VIEWER -->
+    <div id="image-viewer" class="fixed inset-0 bg-black/95 z-50 hidden flex items-center justify-center p-4" onclick="closeImageViewer()">
+        <img id="viewer-img" src="" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+        <button class="absolute top-4 right-4 text-white w-12 h-12 flex items-center justify-center bg-white/20 rounded-full btn-press hover:bg-white/30 transition">
+            <i class="fas fa-times text-2xl"></i>
+        </button>
+    </div>
+
+    <!-- PROFILE MODAL -->
+    <div id="profile-modal" class="modal" onclick="if(event.target === this) closeProfile()">
+        <div class="bg-white w-full max-w-md rounded-t-3xl slide-up max-h-[90vh] overflow-y-auto">
+            <div class="relative h-32 bg-gradient-to-r from-purple-600 to-pink-600">
+                <button onclick="closeProfile()" class="absolute top-4 right-4 text-white w-10 h-10 flex items-center justify-center bg-black/20 rounded-full btn-press">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="px-6 pb-6">
+                <div class="relative -top-12 mb-[-30px]">
+                    <img id="profile-avatar" src="https://i.pravatar.cc/150?img=8" class="w-24 h-24 rounded-full border-4 border-white shadow-lg object-cover">
+                </div>
+                <div class="mt-12 text-center">
+                    <h2 id="profile-name" class="text-2xl font-bold text-gray-900">Rakoto Andry</h2>
+                    <p id="profile-handle" class="text-gray-500">@rakoto_andry</p>
+                    
+                    <div class="flex justify-center space-x-6 mt-4">
+                        <div class="text-center">
+                            <div class="font-bold text-xl text-gray-900">12</div>
+                            <div class="text-sm text-gray-500">Posts</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="font-bold text-xl text-gray-900">248</div>
+                            <div class="text-sm text-gray-500">Abonnés</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="font-bold text-xl text-gray-900">186</div>
+                            <div class="text-sm text-gray-500">Abonnements</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 space-y-2">
+                        <button class="w-full bg-purple-600 text-white py-3 rounded-xl font-semibold btn-press">Modifier le profil</button>
+                        <button onclick="logout()" class="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold btn-press">Déconnexion</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // =====================
+        // DATA & STATE
+        // =====================
+        
+        const APP_KEY = 'vonona_v2_data';
+        const USER_KEY = 'vonona_user';
+        
+        let currentUser = null;
+        let posts = [];
+        let likedPosts = [];
+        let selectedImage = null;
+        
+        // Sample initial data
+        const initialPosts = [
+            {
+                id: 1,
+                author: "Radonirina Famo",
+                avatar: "https://i.pravatar.cc/150?img=11",
+                text: "Bienvenue sur Vonona ! Le nouveau réseau social 100% malgache 🇲🇬✨ Partageons ensemble nos moments de vie !",
+                image: "https://images.unsplash.com/photo-1580060839134-75a5edca2e99?w=800&h=400&fit=crop",
+                likes: 128,
+                comments: 24,
+                time: "Il y a 2h",
+                type: "image"
+            },
+            {
+                id: 2,
+                author: "Marie Lucie",
+                avatar: "https://i.pravatar.cc/150?img=5",
+                text: "Sunset magnifique à Antananarivo aujourd'hui ! 🌅 #Madagascar #Vonona #Tana",
+                image: "https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=800&h=600&fit=crop",
+                likes: 89,
+                comments: 12,
+                time: "Il y a 4h",
+                type: "image"
+            },
+            {
+                id: 3,
+                author: "Jean Robert",
+                avatar: "https://i.pravatar.cc/150?img=3",
+                text: "Nouveau morceau disponible ! 🎵 Du salegy pur pour l'été 🔥",
+                video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                thumbnail: "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=800&h=450&fit=crop",
+                likes: 256,
+                comments: 45,
+                time: "Il y a 5h",
+                type: "video"
+            }
+        ];
+        
+        // =====================
+        // AUTHENTIFICATION
+        // =====================
+        
+        function init() {
+            // Check for existing user
+            const savedUser = localStorage.getItem(USER_KEY);
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showMainApp();
+            } else {
+                showAuthScreen();
+            }
+            
+            // Load posts
+            loadPosts();
+        }
+        
+        function login() {
+            const username = document.getElementById('auth-username').value.trim();
+            if (!username) {
+                showToast('Veuillez entrer votre nom');
+                return;
+            }
+            
+            currentUser = {
+                name: username,
+                avatar: `https://i.pravatar.cc/150?u=${Date.now()}`,
+                handle: '@' + username.toLowerCase().replace(/\s+/g, '_')
+            };
+            
+            localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
+            showMainApp();
+            showToast(`Bienvenue sur Vonona, ${username} ! 🇲🇬`);
+        }
+        
+        function logout() {
+            if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
+                localStorage.removeItem(USER_KEY);
+                location.reload();
+            }
+        }
+        
+        function showAuthScreen() {
+            document.getElementById('auth-screen').classList.remove('hidden');
+            document.getElementById('main-app').classList.add('hidden');
+        }
+        
+        function showMainApp() {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            
+            // Update UI with user info
+            updateUserUI();
+            renderPosts();
+        }
+        
+        function updateUserUI() {
+            if (!currentUser) return;
+            
+            // Update all avatar instances
+            document.querySelectorAll('[id$="-avatar"]').forEach(img => {
+                img.src = currentUser.avatar;
+            });
+            
+            // Update usernames
+            const usernameElements = ['nav-username', 'modal-username', 'profile-name', 'profile-handle'];
+            usernameElements.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    if (id === 'profile-handle') el.textContent = currentUser.handle;
+                    else el.textContent = currentUser.name;
+                }
+            });
+        }
+        
+        // =====================
+        // POSTS MANAGEMENT
+        // =====================
+        
+        function loadPosts() {
+            const saved = localStorage.getItem(APP_KEY);
+            if (saved) {
+                const data = JSON.parse(saved);
+                posts = data.posts || initialPosts;
+                likedPosts = data.liked || [];
+            } else {
+                posts = [...initialPosts];
+                likedPosts = [];
+                savePosts();
+            }
+        }
+        
+        function savePosts() {
+            localStorage.setItem(APP_KEY, JSON.stringify({
+                posts: posts,
+                liked: likedPosts
+            }));
+        }
+        
+        function renderPosts() {
+            const container = document.getElementById('posts-container');
+            
+            if (posts.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-white/80">
+                        <i class="fas fa-inbox text-4xl mb-4 opacity-50"></i>
+                        <p class="text-lg">Aucune publication pour le moment</p>
+                        <p class="text-sm mt-2 opacity-75">Soyez le premier à partager !</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = posts.map((post, index) => createPostHTML(post, index)).join('');
+            
+            // Initialize video players
+            document.querySelectorAll('video').forEach(video => {
+                video.addEventListener('loadedmetadata', function() {
+                    const id = this.id.replace('video-', '');
+                    updateTimeDisplay(id);
+                });
+            });
+        }
+        
+        function createPostHTML(post, index) {
+            const hasLiked = likedPosts.includes(post.id);
+            const isVideo = post.type === 'video';
+            
+            let mediaHTML = '';
+            if (isVideo && post.video) {
+                mediaHTML = `
+                    <div class="video-container relative bg-black aspect-video" id="video-container-${post.id}" onclick="toggleVideo(${post.id})">
+                        <video id="video-${post.id}" class="w-full h-full object-cover" poster="${post.thumbnail}" preload="metadata" playsinline webkit-playsinline>
+                            <source src="${post.video}" type="video/mp4">
+                        </video>
+                        <div class="absolute inset-0 flex items-center justify-center bg-black/20" id="play-overlay-${post.id}">
+                            <div class="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center text-purple-600 shadow-lg btn-press">
+                                <i class="fas fa-play text-2xl ml-1"></i>
+                            </div>
+                        </div>
+                        <div class="video-controls">
+                            <div class="progress-bar" onclick="seekVideo(event, ${post.id})">
+                                <div class="progress-fill" id="progress-${post.id}"></div>
+                                <div class="progress-handle"></div>
+                            </div>
+                            <div class="flex justify-between text-white text-sm">
+                                <div class="flex items-center space-x-4">
+                                    <button onclick="togglePlayButton(event, ${post.id})" id="play-btn-${post.id}">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+                                    <span id="time-${post.id}">0:00 / 0:00</span>
+                                </div>
+                                <button onclick="toggleFullscreen(event, ${post.id})">
+                                    <i class="fas fa-expand"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (post.image) {
+                mediaHTML = `
+                    <div class="relative overflow-hidden group cursor-pointer" onclick="openImageViewer('${post.image}')">
+                        <img src="${post.image}" class="w-full max-h-[500px] object-cover transition transform group-hover:scale-105 duration-500" loading="lazy">
+                        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition duration-300"></div>
+                    </div>
+                `;
+            }
+            
+            return `
+                <article class="bg-white rounded-2xl shadow-lg mb-4 fade-in overflow-hidden border border-gray-100" style="animation-delay: ${index * 0.1}s">
+                    <div class="p-4 flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <img src="${post.avatar}" class="w-10 h-10 rounded-full object-cover border-2 border-purple-100">
+                            <div>
+                                <h4 class="font-bold text-sm text-gray-900">${escapeHTML(post.author)}</h4>
+                                <p class="text-xs text-gray-500">${post.time}</p>
+                            </div>
+                        </div>
+                        <button class="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition btn-press">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </button>
+                    </div>
+
+                    <div class="px-4 pb-3">
+                        <p class="text-gray-800 leading-relaxed text-sm md:text-base">${escapeHTML(post.text)}</p>
+                    </div>
+
+                    ${mediaHTML}
+
+                    <div class="p-4 border-t border-gray-100">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex space-x-6">
+                                <button onclick="likePost(${post.id}, this)" 
+                                    class="${hasLiked ? 'text-red-500' : 'text-gray-500'} flex items-center space-x-2 group btn-press transition">
+                                    <i class="${hasLiked ? 'fas' : 'far'} fa-heart text-xl ${hasLiked ? 'like-anim' : 'group-hover:scale-110 transition-transform'}"></i>
+                                    <span class="font-semibold text-sm" id="likes-${post.id}">${post.likes}</span>
+                                </button>
+                                
+                                <button class="text-gray-500 flex items-center space-x-2 hover:text-blue-500 transition btn-press">
+                                    <i class="far fa-comment text-xl"></i>
+                                    <span class="font-semibold text-sm">${post.comments}</span>
+                                </button>
+                                
+                                <button onclick="sharePost(${post.id})" class="text-gray-500 flex items-center space-x-2 hover:text-green-500 transition btn-press">
+                                    <i class="fas fa-share text-xl"></i>
+                                </button>
+                            </div>
+                            
+                            <button class="text-gray-400 hover:text-purple-600 transition btn-press">
+                                <i class="far fa-bookmark text-xl"></i>
+                            </button>
+                        </div>
+                        
+                        ${post.likes > 0 ? `
+                        <div class="text-sm text-gray-600">
+                            Aimé par <span class="font-semibold text-gray-900">Jean R.</span> et 
+                            <span class="font-semibold text-gray-900">${post.likes - 1} autres</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                </article>
+            `;
+        }
+        
+        // =====================
+        // VIDEO CONTROLS
+        // =====================
+        
+        let currentVideo = null;
+        
+        function toggleVideo(postId) {
+            const video = document.getElementById(`video-${postId}`);
+            const container = document.getElementById(`video-container-${postId}`);
+            const overlay = document.getElementById(`play-overlay-${postId}`);
+            
+            if (!video) return;
+            
+            if (video.paused) {
+                // Pause other videos
+                if (currentVideo && currentVideo !== video) {
+                    currentVideo.pause();
+                    currentVideo.closest('.video-container').classList.remove('show-controls');
+                }
+                
+                video.play();
+                currentVideo = video;
+                overlay.style.display = 'none';
+                container.classList.add('show-controls');
+                updateProgress(postId);
+            } else {
+                video.pause();
+                overlay.style.display = 'flex';
+                container.classList.remove('show-controls');
+            }
+        }
+        
+        function togglePlayButton(e, postId) {
+            e.stopPropagation();
+            toggleVideo(postId);
+        }
+        
+        function updateProgress(postId) {
+            const video = document.getElementById(`video-${postId}`);
+            const progress = document.getElementById(`progress-${postId}`);
+            const timeDisplay = document.getElementById(`time-${postId}`);
+            
+            if (!video || video.paused) return;
+            
+            const update = () => {
+                if (video.paused || !progress) return;
+                const pct = (video.currentTime / video.duration) * 100;
+                progress.style.width = pct + '%';
+                timeDisplay.textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
+                requestAnimationFrame(update);
+            };
+            
+            requestAnimationFrame(update);
+            
+            video.onended = () => {
+                document.getElementById(`play-overlay-${postId}`).style.display = 'flex';
+                document.getElementById(`video-container-${postId}`).classList.remove('show-controls');
+            };
+        }
+        
+        function updateTimeDisplay(postId) {
+            const video = document.getElementById(`video-${postId}`);
+            const timeDisplay = document.getElementById(`time-${postId}`);
+            if (video && timeDisplay) {
+                timeDisplay.textContent = `0:00 / ${formatTime(video.duration)}`;
+            }
+        }
+        
+        function seekVideo(e, postId) {
+            e.stopPropagation();
+            const video = document.getElementById(`video-${postId}`);
+            const bar = e.currentTarget;
+            const rect = bar.getBoundingClientRect();
+            const pct = (e.clientX - rect.left) / rect.width;
+            video.currentTime = pct * video.duration;
+        }
+        
+        function toggleFullscreen(e, postId) {
+            e.stopPropagation();
+            const container = document.getElementById(`video-container-${postId}`);
+            if (!document.fullscreenElement) {
+                container.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        // =====================
+        // INTERACTIONS
+        // =====================
+        
+        function likePost(postId, btn) {
+            if (likedPosts.includes(postId)) {
+                showToast('Vous avez déjà aimé cette publication');
+                return;
+            }
+            
+            // Animation
+            const icon = btn.querySelector('i');
+            const rect = btn.getBoundingClientRect();
+            
+            // Floating heart
+            const heart = document.createElement('div');
+            heart.className = 'heart-particle';
+            heart.innerHTML = '<i class="fas fa-heart"></i>';
+            heart.style.left = (rect.left + 10) + 'px';
+            heart.style.top = rect.top + 'px';
+            document.body.appendChild(heart);
+            setTimeout(() => heart.remove(), 1000);
+            
+            // Update data
+            const post = posts.find(p => p.id === postId);
+            if (post) {
+                post.likes++;
+                likedPosts.push(postId);
+                savePosts();
+                
+                // Update UI
+                btn.classList.remove('text-gray-500');
+                btn.classList.add('text-red-500');
+                icon.classList.remove('far');
+                icon.classList.add('fas', 'like-anim');
+                document.getElementById(`likes-${postId}`).textContent = post.likes;
+                
+                showToast('Vous aimez cette publication ❤️');
+            }
+        }
+        
+        function sharePost(postId) {
+            const post = posts.find(p => p.id === postId);
+            if (!post) return;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Vonona - ' + post.author,
+                    text: post.text,
+                    url: window.location.href
+                });
+            } else {
+                // Fallback copy to clipboard
+                const text = `${post.author} sur Vonona: ${post.text}`;
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast('Lien copié dans le presse-papiers !');
+                });
+            }
+        }
+        
+        // =====================
+        // CREATE POST
+        // =====================
+        
+        function openModal() {
+            document.getElementById('post-modal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeModal() {
+            document.getElementById('post-modal').classList.remove('active');
+            document.body.style.overflow = '';
+            // Reset form
+            document.getElementById('post-text').value = '';
+            removeImage();
+        }
+        
+        function checkPostInput() {
+            const text = document.getElementById('post-text').value.trim();
+            const btn = document.getElementById('publish-btn');
+            
+            if (text || selectedImage) {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+        
+        function handleImageSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Validate size (5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+                showToast("L'image ne doit pas dépasser 5MB");
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = e => {
+                selectedImage = e.target.result;
+                document.getElementById('image-preview').src = selectedImage;
+                document.getElementById('image-preview-container').classList.remove('hidden');
+                checkPostInput();
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function removeImage() {
+            selectedImage = null;
+            document.getElementById('image-preview-container').classList.add('hidden');
+            document.getElementById('image-input').value = '';
+            checkPostInput();
+        }
+        
+        function publishPost() {
+            const text = document.getElementById('post-text').value.trim();
+            if (!text && !selectedImage) return;
+            
+            const newPost = {
+                id: Date.now(),
+                author: currentUser.name,
+                avatar: currentUser.avatar,
+                text: text || ' ',
+                image: selectedImage,
+                likes: 0,
+                comments: 0,
+                time: "À l'instant",
+                type: selectedImage ? 'image' : 'text'
+            };
+            
+            posts.unshift(newPost);
+            savePosts();
+            renderPosts();
+            closeModal();
+            savePosts();
+            closeModal();
+            renderPosts();
+            showToast('Publication réussie ! 🎉');
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        // =====================
+        // STORIES
+        // =====================
+        
+        let storyTimeout = null;
+        
+        function viewStory(username, avatar, type) {
+            const viewer = document.getElementById('story-viewer');
+            const content = document.getElementById('story-content');
+            const progress = document.getElementById('story-progress');
+            
+            document.getElementById('story-viewer-avatar').src = avatar;
+            document.getElementById('story-viewer-username').textContent = username;
+            
+            viewer.classList.remove('hidden');
+            
+            if (type === 'video') {
+                content.innerHTML = `<video src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" class="w-full h-full object-cover" autoplay playsinline muted></video>`;
+            } else {
+                content.innerHTML = `<img src="https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=600&h=800&fit=crop" class="w-full h-full object-cover">`;
+            }
+            
+            // Progress animation
+            progress.style.transition = 'none';
+            progress.style.width = '0%';
+            setTimeout(() => {
+                progress.style.transition = 'width 5s linear';
+                progress.style.width = '100%';
+            }, 50);
+            
+            storyTimeout = setTimeout(() => closeStory(), 5000);
+        }
+        
+        function closeStory() {
+            clearTimeout(storyTimeout);
+            document.getElementById('story-viewer').classList.add('hidden');
+            const video = document.querySelector('#story-content video');
+            if (video) video.pause();
+        }
+        
+        function openCamera() {
+            showToast('Caméra - Fonctionnalité à venir');
+        }
+        
+        // =====================
+        // IMAGE VIEWER
+        // =====================
+        
+        function openImageViewer(src) {
+            document.getElementById('viewer-img').src = src;
+            document.getElementById('image-viewer').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeImageViewer() {
+            document.getElementById('image-viewer').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+        
+        // =====================
+        // PROFILE
+        // =====================
+        
+        function showProfile() {
+            document.getElementById('profile-modal').classList.add('active');
+        }
+        
+        function closeProfile() {
+            document.getElementById('profile-modal').classList.remove('active');
+        }
+        
+        // =====================
+        // UTILITIES
+        // =====================
+        
+        function escapeHTML(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        // =====================
+        // EVENT LISTENERS
+        // =====================
+        
+        // Prevent double tap zoom on mobile
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (e) => {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                closeStory();
+                closeImageViewer();
+                closeProfile();
+            }
+        });
+        
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
